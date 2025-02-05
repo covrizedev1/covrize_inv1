@@ -10,9 +10,10 @@ import {
   SpApplication,
   SubmitSpApplicationDto,
   WithdrawSpApplicationDto,
+  Query,
+  parseQuery
 } from '@involvemint/shared/domain';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { IQuery, parseQuery } from '@orcha/common';
 import * as geocoder from 'node-geocoder';
 import { Socket } from 'socket.io';
 import * as uuid from 'uuid';
@@ -27,7 +28,7 @@ export class SpApplicationService {
     handleDisconnect: (client: Socket) => {
       this.spAppRepo.subscriptions.onDisconnect(client);
     },
-    subAll: async (socket: Socket, channel: string, query: IQuery<SpApplication[]>, token: string) => {
+    subAll: async (socket: Socket, channel: string, query: Query<SpApplication[]>, token: string) => {
       await this.auth.validateAdminToken(token);
       return this.spAppRepo.subscriptions.querySubscription(socket, channel, query);
     },
@@ -42,7 +43,7 @@ export class SpApplicationService {
     private readonly email: EmailService
   ) {}
 
-  async submit(query: IQuery<SpApplication>, dto: SubmitSpApplicationDto, token: string) {
+  async submit(query: Query<SpApplication>, dto: SubmitSpApplicationDto, token: string) {
     const user = await this.auth.validateUserToken(token);
 
     await this.handle.verifyHandleUniqueness(dto.handle);
@@ -91,7 +92,7 @@ export class SpApplicationService {
   }
 
   async process(
-    query: IQuery<{ deletedId: string }>,
+    query: Query<{ deletedId: string }>,
     dto: ProcessSpApplicationDto,
     token: string,
     auth = true
@@ -167,12 +168,12 @@ export class SpApplicationService {
     return parseQuery(query, { deletedId: dto.id });
   }
 
-  async findAll(query: IQuery<SpApplication>, token: string) {
+  async findAll(query: Query<SpApplication>, token: string) {
     await this.auth.validateAdminToken(token);
     return this.spAppRepo.findAll(query);
   }
 
-  async withdraw(query: IQuery<{ deletedId: string }>, token: string, dto: WithdrawSpApplicationDto) {
+  async withdraw(query: Query<{ deletedId: string }>, token: string, dto: WithdrawSpApplicationDto) {
     const user = await this.auth.validateUserToken(token);
     const epApp = await this.spAppRepo.findOneOrFail(dto.spAppId, { user: { id: true } });
 

@@ -16,13 +16,15 @@ import {
   UpdateProjectDto,
   UploadCustomWaiverDto,
   UploadProjectImageDto,
+  Query,
+  parseQuery
 } from '@involvemint/shared/domain';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { IQuery, parseQuery } from '@orcha/common';
 import * as uuid from 'uuid';
 import { AuthService } from '../auth/auth.service';
 import { StorageService } from '../storage/storage.service';
 import { DbTransactionCreator } from '../transaction-creator/transaction-creator.service';
+import { getDefaultAddress } from '@involvemint/shared/domain';
 
 @Injectable()
 export class ProjectService {
@@ -49,11 +51,11 @@ export class ProjectService {
 
   // TODO dto criteria
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async getAll(query: IQuery<Project[]>, dto: ProjectsQueryDto) {
+  async getAll(query: Query<Project[]>, dto: ProjectsQueryDto) {
     return this.projectRepo.query(query, { where: { listingStatus: 'public' } });
   }
 
-  async getOne(query: IQuery<Project>, token: string, dto: GetProjectDto) {
+  async getOne(query: Query<Project>, token: string, dto: GetProjectDto) {
     let userIsEnrolled = false;
     const project = await this.projectRepo.findOneOrFail(dto.projectId, { id: true, listingStatus: true });
     if (token) {
@@ -80,12 +82,12 @@ export class ProjectService {
     return this.projectRepo.findOneOrFail(dto.projectId, query);
   }
 
-  async getAllOwnedBySp(query: IQuery<Project[]>, token: string, { spId }: ProjectsSpDto) {
+  async getAllOwnedBySp(query: Query<Project[]>, token: string, { spId }: ProjectsSpDto) {
     await this.permissions.userIsServeAdmin(token, spId);
     return this.projectRepo.query(query, { where: { servePartner: spId } });
   }
 
-  async create(query: IQuery<Project[]>, token: string, dto: CreateProjectDto) {
+  async create(query: Query<Project[]>, token: string, dto: CreateProjectDto) {
     await this.permissions.userIsServeAdmin(token, dto.spId);
 
     return this.projectRepo.upsert(
@@ -119,13 +121,13 @@ export class ProjectService {
     );
   }
 
-  async update(query: IQuery<Project>, token: string, { projectId, changes }: UpdateProjectDto) {
+  async update(query: Query<Project>, token: string, { projectId, changes }: UpdateProjectDto) {
     const project = await this.projectRepo.findOneOrFail(projectId, { servePartner: { id: true } });
     await this.permissions.userIsServeAdmin(token, project.servePartner.id);
     return this.projectRepo.update(projectId, { ...changes, dateUpdated: new Date() }, query);
   }
 
-  async delete(query: IQuery<{ deletedId: string }>, token: string, dto: DeleteProjectDto) {
+  async delete(query: Query<{ deletedId: string }>, token: string, dto: DeleteProjectDto) {
     const project = await this.projectRepo.findOneOrFail(dto.projectId, {
       servePartner: { id: true },
       imagesFilePaths: true,
@@ -147,7 +149,7 @@ export class ProjectService {
   }
 
   async uploadImages(
-    query: IQuery<Project>,
+    query: Query<Project>,
     token: string,
     dto: UploadProjectImageDto,
     files: Express.Multer.File[]
@@ -179,7 +181,7 @@ export class ProjectService {
     );
   }
 
-  async deleteImage(query: IQuery<Project>, token: string, dto: DeleteProjectImageDto) {
+  async deleteImage(query: Query<Project>, token: string, dto: DeleteProjectImageDto) {
     const project = await this.projectRepo.findOneOrFail(dto.projectId, {
       servePartner: { id: true },
       imagesFilePaths: true,
@@ -196,7 +198,7 @@ export class ProjectService {
   }
 
   async uploadCustomWaiver(
-    query: IQuery<Project>,
+    query: Query<Project>,
     token: string,
     dto: UploadCustomWaiverDto,
     file: Express.Multer.File

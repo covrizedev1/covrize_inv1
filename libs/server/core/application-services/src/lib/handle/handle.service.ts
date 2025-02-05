@@ -1,7 +1,12 @@
 import { HandleRepository } from '@involvemint/server/core/domain-services';
-import { GenericHandleSearchDto, Handle, SearchHandleDto, ViewProfileDto } from '@involvemint/shared/domain';
+import { 
+  GenericHandleSearchDto, 
+  Handle, 
+  SearchHandleDto, 
+  ViewProfileDto,
+  Query
+} from '@involvemint/shared/domain';
 import { Injectable } from '@nestjs/common';
-import { IQuery } from '@orcha/common';
 import { Raw } from 'typeorm';
 
 @Injectable()
@@ -16,17 +21,17 @@ export class HandleService {
     return handles.length === 0;
   }
 
-  async searchHandles(query: IQuery<Handle>, dto: SearchHandleDto) {
+  async searchHandles(query: Query<Handle>, dto: SearchHandleDto) {
     return this.handleRepo.query(query, {
       where: { id: Raw((alias) => `${alias} ILIKE '%${dto.handleSearchString}%'`) },
     });
   }
 
-  async viewProfile(query: IQuery<Handle[]>, dto: ViewProfileDto) {
+  async viewProfile(query: Query<Handle[]>, dto: ViewProfileDto) {
     return this.handleRepo.findOneOrFail(dto.handle, query);
   }
 
-  async genericSearch(query: IQuery<Handle[]>, dto: GenericHandleSearchDto) {
+  async genericSearch(query: Query<Handle[]>, dto: GenericHandleSearchDto) {
     const q = Raw((alias) => `${alias} ILIKE '%${dto.search}%'`);
     return this.handleRepo.query(query, {
       where: [

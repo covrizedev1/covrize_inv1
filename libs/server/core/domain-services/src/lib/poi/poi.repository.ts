@@ -1,14 +1,13 @@
-import { Poi } from '@involvemint/shared/domain';
+import { Poi, IParser, IProps, Query, ExactQuery} from '@involvemint/shared/domain';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IExactQuery, IParser, IProps, IQuery } from '@orcha/common';
-import { IOrchaTypeormRepository } from '@orcha/typeorm';
+import { IBaseRepository } from '../repository/typeorm-base-repository';
 import { In, Repository } from 'typeorm';
 import { EnrollmentRepository } from '../enrollment/enrollment.repository';
 import { PoiEntity } from './poi.entity';
 
 @Injectable()
-export class PoiRepository extends IOrchaTypeormRepository<Poi> {
+export class PoiRepository extends IBaseRepository<Poi> {
   constructor(
     @InjectRepository(PoiEntity) protected readonly repo: Repository<Poi>,
     private readonly enrollmentRepo: EnrollmentRepository
@@ -17,13 +16,13 @@ export class PoiRepository extends IOrchaTypeormRepository<Poi> {
   }
 
   async findPoisByCm(cmId: string): Promise<IProps<Poi>[]>;
-  async findPoisByCm<Q extends IQuery<Poi[]>>(
+  async findPoisByCm<Q extends Query<Poi[]>>(
     cmId: string,
-    query: IExactQuery<Poi, Q>
+    query: ExactQuery<Poi, Q>
   ): Promise<IParser<Poi[], Q>>;
-  async findPoisByCm<Q extends IQuery<Poi[]>>(
+  async findPoisByCm<Q extends Query<Poi[]>>(
     cmId: string,
-    query?: IExactQuery<Poi, Q>
+    query?: ExactQuery<Poi, Q>
   ): Promise<IProps<Poi>[] | IParser<Poi[], Q>> {
     /* Workaround for nested where clause. */
     const enrollments = await this.enrollmentRepo.query(
@@ -42,13 +41,13 @@ export class PoiRepository extends IOrchaTypeormRepository<Poi> {
   }
 
   async findPoisByProject(projectId: string): Promise<IProps<Poi>[]>;
-  async findPoisByProject<Q extends IQuery<Poi[]>>(
+  async findPoisByProject<Q extends Query<Poi[]>>(
     projectId: string,
-    query: IExactQuery<Poi, Q>
+    query: ExactQuery<Poi, Q>
   ): Promise<IParser<Poi[], Q>>;
-  async findPoisByProject<Q extends IQuery<Poi[]>>(
+  async findPoisByProject<Q extends Query<Poi[]>>(
     projectId: string,
-    query?: IExactQuery<Poi, Q>
+    query?: ExactQuery<Poi, Q>
   ): Promise<IProps<Poi>[] | IParser<Poi[], Q>> {
     /* Workaround for nested where clause. */
     const enrollments = await this.enrollmentRepo.query(

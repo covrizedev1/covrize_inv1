@@ -5,9 +5,10 @@ import {
   GetExchangeAdminsForExchangePartnerDto,
   GetSuperAdminForExchangePartnerDto,
   RemoveExchangeAdminDto,
+  Query,
+  parseQuery
 } from '@involvemint/shared/domain';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { IQuery, parseQuery } from '@orcha/common';
 import * as uuid from 'uuid';
 import { AuthService } from '../auth/auth.service';
 
@@ -16,7 +17,7 @@ export class ExchangeAdminService {
   constructor(private readonly epAdminRepo: ExchangeAdminRepository, private readonly auth: AuthService) {}
 
   async getForExchangePartner(
-    query: IQuery<ExchangeAdmin>,
+    query: Query<ExchangeAdmin>,
     token: string,
     dto: GetExchangeAdminsForExchangePartnerDto
   ) {
@@ -26,7 +27,7 @@ export class ExchangeAdminService {
   }
 
   async getSuperAdminForExchangePartner(
-    query: IQuery<ExchangeAdmin>,
+    query: Query<ExchangeAdmin>,
     token: string,
     dto: GetSuperAdminForExchangePartnerDto
   ) {
@@ -43,7 +44,7 @@ export class ExchangeAdminService {
     return superAdmin[0];
   }
 
-  async addAdmin(query: IQuery<ExchangeAdmin>, token: string, dto: AddExchangeAdminDto) {
+  async addAdmin(query: Query<ExchangeAdmin>, token: string, dto: AddExchangeAdminDto) {
     /** User making the request. */
     const user = await this.auth.authenticateFromProfileId(dto.epId, token);
 
@@ -74,7 +75,7 @@ export class ExchangeAdminService {
       query
     );
   }
-  async removeAdmin(query: IQuery<{ deletedId: true }>, token: string, dto: RemoveExchangeAdminDto) {
+  async removeAdmin(query: Query<{ deletedId: true }>, token: string, dto: RemoveExchangeAdminDto) {
     /** Admin to remove. */
     const adminToRemove = await this.epAdminRepo.findOneOrFail(dto.eaId, {
       exchangePartner: { id: true },

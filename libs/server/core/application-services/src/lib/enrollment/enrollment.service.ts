@@ -1,7 +1,7 @@
 import {
   EnrollmentDocumentRepository,
   EnrollmentRepository,
-  ProjectRepository,
+  ProjectRepository
 } from '@involvemint/server/core/domain-services';
 import {
   AcceptWaiverDto,
@@ -19,9 +19,10 @@ import {
   StartEnrollmentApplicationDto,
   SubmitEnrollmentApplicationDto,
   WithdrawEnrollmentApplicationDto,
+  Query,
+  parseQuery
 } from '@involvemint/shared/domain';
 import { HttpException, HttpStatus, Inject, Injectable, InternalServerErrorException } from '@nestjs/common';
-import { IQuery, parseQuery } from '@orcha/common';
 import * as uuid from 'uuid';
 import { AuthService } from '../auth/auth.service';
 import { EmailService } from '../email/email.service';
@@ -41,7 +42,7 @@ export class EnrollmentService {
     @Inject(FRONTEND_ROUTES_TOKEN) private readonly route: FrontendRoutes
   ) {}
 
-  async get(query: IQuery<Enrollment[]>, token: string) {
+  async get(query: Query<Enrollment[]>, token: string) {
     const user = await this.auth.validateUserToken(token ?? '', { id: true, changeMaker: { id: true } });
 
     if (!user?.changeMaker) {
@@ -54,13 +55,13 @@ export class EnrollmentService {
     return this.enrollmentRepo.query(query, { where: { changeMaker: { id: user.changeMaker.id } } });
   }
 
-  async getBySpProject(query: IQuery<Enrollment[]>, token: string, dto: GetEnrollmentsBySpProject) {
+  async getBySpProject(query: Query<Enrollment[]>, token: string, dto: GetEnrollmentsBySpProject) {
     const project = await this.projectsRepo.findOneOrFail(dto.projectId, { servePartner: { id: true } });
     await this.projectService.permissions.userIsServeAdmin(token, project.servePartner.id);
     return this.enrollmentRepo.query(query, { where: { project: { id: dto.projectId } } });
   }
 
-  async startApplication(query: IQuery<Enrollment>, token: string, dto: StartEnrollmentApplicationDto) {
+  async startApplication(query: Query<Enrollment>, token: string, dto: StartEnrollmentApplicationDto) {
     const user = await this.auth.validateUserToken(token ?? '', {
       id: true,
       changeMaker: { id: true, handle: { id: true } },
@@ -120,7 +121,7 @@ export class EnrollmentService {
     return rtn;
   }
 
-  async withdraw(query: IQuery<{ deletedId: string }>, token: string, dto: WithdrawEnrollmentApplicationDto) {
+  async withdraw(query: Query<{ deletedId: string }>, token: string, dto: WithdrawEnrollmentApplicationDto) {
     const user = await this.auth.validateUserToken(token ?? '', { changeMaker: { id: true } });
     const enrollment = await this.enrollmentRepo.findOneOrFail(dto.enrollmentId, {
       changeMaker: { id: true, handle: { id: true } },
@@ -147,7 +148,7 @@ export class EnrollmentService {
     return parseQuery(query, { deletedId: dto.enrollmentId });
   }
 
-  async linkPassportDocument(query: IQuery<Enrollment>, token: string, dto: LinkPassportDocumentDto) {
+  async linkPassportDocument(query: Query<Enrollment>, token: string, dto: LinkPassportDocumentDto) {
     const user = await this.auth.validateUserToken(token ?? '', { changeMaker: { id: true } });
     const enrollment = await this.enrollmentRepo.findOneOrFail(dto.enrollmentId, {
       changeMaker: { id: true },
@@ -183,7 +184,7 @@ export class EnrollmentService {
     return this.enrollmentRepo.findOneOrFail(dto.enrollmentId, query);
   }
 
-  async submitApplication(query: IQuery<Enrollment>, token: string, dto: SubmitEnrollmentApplicationDto) {
+  async submitApplication(query: Query<Enrollment>, token: string, dto: SubmitEnrollmentApplicationDto) {
     const user = await this.auth.validateUserToken(token ?? '', { changeMaker: { id: true } });
     const enrollment = await this.enrollmentRepo.findOneOrFail(dto.enrollmentId, {
       changeMaker: { id: true, handle: { id: true } },
@@ -237,7 +238,7 @@ export class EnrollmentService {
     return rtn;
   }
 
-  async acceptWaiver(query: IQuery<Enrollment>, token: string, dto: AcceptWaiverDto) {
+  async acceptWaiver(query: Query<Enrollment>, token: string, dto: AcceptWaiverDto) {
     const user = await this.auth.validateUserToken(token ?? '', { changeMaker: { id: true } });
     const enrollment = await this.enrollmentRepo.findOneOrFail(dto.enrollmentId, {
       changeMaker: { id: true },
@@ -255,7 +256,7 @@ export class EnrollmentService {
   }
 
   async processEnrollmentApplication(
-    query: IQuery<Enrollment>,
+    query: Query<Enrollment>,
     token: string,
     dto: ProcessEnrollmentApplicationDto
   ) {
@@ -329,7 +330,7 @@ export class EnrollmentService {
   }
 
   async revertEnrollmentApplication(
-    query: IQuery<Enrollment>,
+    query: Query<Enrollment>,
     token: string,
     dto: RevertEnrollmentApplicationDto
   ) {
@@ -360,7 +361,7 @@ export class EnrollmentService {
     return this.enrollmentRepo.findOneOrFail(enrollment.id, query);
   }
 
-  async retireEnrollment(query: IQuery<Enrollment>, token: string, dto: RetireEnrollmentDto) {
+  async retireEnrollment(query: Query<Enrollment>, token: string, dto: RetireEnrollmentDto) {
     const enrollment = await this.enrollmentRepo.findOneOrFail(dto.enrollmentId, {
       id: true,
       dateApproved: true,
